@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import TableLine from "./TableLine";
 import ToTop from "./ToTop";
+import { useSelector } from "react-redux";
+import { isStableCoin } from "./Utils";
 
 const Table = ({ coinsData }) => {
   const [orderBy, setOrderBy] = useState("");
   const [rangeNumber, setRangeNumber] = useState(100);
-
+  const showStable = useSelector((state) => state.stableReducer.showStable);
+  const showFavList = useSelector((state) => state.listReducer.showList);
   const tableHeader = [
     "Prix",
     "MarketCap",
@@ -18,34 +21,6 @@ const Table = ({ coinsData }) => {
     "1y",
     "ATH",
   ];
-
-  const excludeCoin = (coin) => {
-    if (
-      coin === "usdt" ||
-      coin === "usdc" ||
-      coin === "busd" ||
-      coin === "dai" ||
-      coin === "ust" ||
-      coin === "mim" ||
-      coin === "tusd" ||
-      coin === "usdp" ||
-      coin === "usdn" ||
-      coin === "fei" ||
-      coin === "tribe" ||
-      coin === "gusd" ||
-      coin === "frax" ||
-      coin === "lusd" ||
-      coin === "husd" ||
-      coin === "ousd" ||
-      coin === "xsgd" ||
-      coin === "usdx" ||
-      coin === "eurs"
-    ) {
-      return false;
-    } else {
-      return true;
-    }
-  };
 
   return (
     <div className="table-container">
@@ -92,6 +67,25 @@ const Table = ({ coinsData }) => {
       {coinsData &&
         coinsData
           .slice(0, rangeNumber)
+          .filter((coin) => {
+            if (showStable) {
+              return coin;
+            } else {
+              if (isStableCoin(coin.symbol)) {
+                return coin;
+              }
+            }
+          })
+          .filter((coin) => {
+            if (showFavList) {
+              let list = window.localStorage.coinList.split(",");
+              if (list.includes(coin.id)) {
+                return coin;
+              }
+            } else {
+              return coin;
+            }
+          })
           .sort((a, b) => {
             switch (orderBy) {
               case "Prix":
@@ -177,7 +171,7 @@ const Table = ({ coinsData }) => {
             }
           })
           .map((coin, index) => (
-            <TableLine coin={coin} key={coin.id} index={index} />
+            <TableLine coin={coin} key={coin.id} index={index + 1} />
           ))}
     </div>
   );
